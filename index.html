@@ -1,0 +1,264 @@
+<html>
+
+<head>
+  <title>
+    GoodDoers
+  </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://www.gstatic.com/firebasejs/7.4.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/3.1.0/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/6.2.3/firebase-storage.js"></script>
+  <!-- If you enabled Analytics in your project, add the Firebase SDK for Analytics -->
+  <script src="https://www.gstatic.com/firebasejs/7.4.0/firebase-analytics.js"></script>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <!-- Add Firebase products that you want to use -->
+  <script src="https://www.gstatic.com/firebasejs/7.4.0/firebase-firestore.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style type="text/css">
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-image: linear-gradient(45deg, whight, lightblue);
+      overflow-x: hidden;
+      text-decoration: none;
+    }
+
+    .top {
+      height: 50px;
+    }
+
+    .top img {
+      height: 50px;
+    }
+
+    .column {
+      float: left;
+      width: 31%;
+      margin: 20px 1.15%;
+      height: 160px;
+      background-color: #b2d6ff;
+      /* Medium blue */
+    }
+
+    .request_name {
+      color: black;
+    }
+
+    .add {
+      position: fixed;
+      width: auto;
+      bottom: 10px;
+      right: 0px;
+      margin: 1ex;
+      z-index: 100;
+      transform: height 2s;
+    }
+
+    .add img {
+      height: 50px;
+    }
+
+    #add_request {
+      position: absolute;
+      display: none;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(53, 52, 52, 0.5);
+      z-index: 2;
+      margin: 0;
+    }
+
+    #overlay_cont {
+      background: #fdfdfd;
+      padding: 20px;
+    }
+
+    .form-control:focus {
+      box-shadow: none;
+    }
+
+    .form-control-underlined {
+      border-width: 0;
+      border-bottom-width: 1px;
+      border-radius: 0;
+      padding-left: 0;
+    }
+
+    .search {
+      position: relative;
+      right: 10px;
+      width: auto;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="home">
+    <div class="jumbotron top">
+      <div class="p-1 bg-light rounded rounded-pill shadow-sm mb-4 search">
+        <div class="input-group">
+          <input type="search" placeholder="Zipcode..." aria-describedby="button-addon1"
+            class="form-control border-0 bg-light" id="search_val">
+          <div class="input-group-append">
+            <button type="button" class="btn btn-default">
+              <span class="glyphicon glyphicon-search"></span> Search
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div id="content">
+      <div class="add">
+        <a onclick="see_overlay()"><img src="https://image.flaticon.com/icons/svg/60/60740.svg" /></a>
+      </div>
+    </div>
+    <div id="add_request" class="row">
+      <div class="container over_cont" id="overlay_cont">
+        <button type="button" class="close" aria-label="Close" onclick="overlay_off()">
+          <span aria-hidden="true" style=" font-size: 40px; ">&times;</span>
+        </button>
+        <h1 id="type_">ADD REQUEST</h1>
+        <hr />
+        <form>
+          <div class="form-group">
+            <label for="exampleInputEmail1">Name of request</label>
+            <input type="text" class="form-control" id="request" aria-describedby="emailHelp"
+              placeholder="Request..." />
+          </div>
+
+          <div class="form-group">
+            <label for="exampleInputEmail1">Location</label>
+            <input type="text" class="form-control" id="location" aria-describedby="emailHelp"
+              placeholder="Location..." />
+          </div>
+
+          <div class="form-group">
+            <label for="exampleInputEmail1">What the help is for...</label>
+            <input type="text" class="form-control" id="task" aria-describedby="emailHelp" placeholder="Unboxing..." />
+          </div>
+          <div class="form-group">
+            <label for="exampleInputEmail1">Number of helpers</label>
+            <input type="number" class="form-control" id="num_helpers" aria-describedby="emailHelp" placeholder="0" />
+          </div>
+          <a class="btn btn-primary" onclick="add_req()" style="color: white;">
+            ADD
+          </a>
+
+          <a id="change_type"></a>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script>
+    var firebaseConfig = {
+      apiKey: "AIzaSyBFYefjSZ6q_41W7aeZN5heKDdhUCKxncY",
+      authDomain: "startup-f6f3e.firebaseapp.com",
+      databaseURL: "https://startup-f6f3e.firebaseio.com",
+      projectId: "startup-f6f3e",
+      storageBucket: "startup-f6f3e.appspot.com",
+      messagingSenderId: "455812201115",
+      appId: "1:455812201115:web:a06779461cbf058f3aa43e",
+      measurementId: "G-G2J1XBLWP0"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    //firebase.analytics();
+
+    //var add = document.getElementById("add_request");
+    // var overlay = document.getElementById("add_request");
+    var name_request = document.getElementById("request");
+    // var location = document.getElementById("location");
+    // var task = document.getElementById("task");
+    // var num_helpers = document.getElementById("num_helpers");
+
+    function see_overlay() {
+      document.getElementById("add_request").style.display = "block";
+    }
+
+    function overlay_off() {
+      document.getElementById("add_request").style.display = "none";
+      location.reload();
+    }
+    var req_titles = [];
+    var leadsRef = firebase.database().ref("Requests");
+    leadsRef.on("value", function (snapshot) {
+      snapshot.forEach(function (childSnapshot) {
+        var c = childSnapshot.val();
+        req_titles.push(c["name_equest"]);
+        creat(c["location"], c["task"], c["date"], c["name_equest"]);
+      });
+    });
+
+    function add_req() {
+      var today = new Date();
+      var dd = today.getDate();
+      var mm = today.getMonth() + 1; //As January is 0.
+      var yyyy = today.getFullYear();
+      console.log("it work!!!");
+      firebase
+        .database()
+        .ref("Requests/" + name_request.value)
+        .set({
+          name_equest: document.getElementById("request").value,
+          location: document.getElementById("location").value,
+          task: document.getElementById("task").value,
+          date: (dd + "/" + mm + "/" + yyyy)
+        });
+      reset();
+    }
+
+    function creat(locationn, taskk, datee, name_requestt) {
+      var maindiv = document.getElementById("content");
+      var list_group = document.createElement("div");
+      list_group.className = "list_group";
+      var list_group_item = document.createElement("a");
+      list_group_item.classList = "list-group-item list-group-item-action flex-column align-items-start";
+      var d_flex = document.createElement("div"); //div
+      d_flex.className = "d-flex w-100 justify-content-between";
+      var req_title = document.createElement("h5");
+      req_title.className = "mb-1 request_name";
+      req_title.innerHTML = name_requestt;
+      var day = document.createElement("small");
+      day.innerHTML = datee;
+      d_flex.appendChild(req_title);
+      d_flex.appendChild(day);
+      var p_task = document.createElement("p");
+      p_task.className = "mb-1";
+      p_task.innerHTML = taskk;
+      var _location = document.createElement("small");
+      _location.innerHTML = locationn;
+
+      list_group_item.appendChild(d_flex);
+      list_group_item.appendChild(p_task);
+      list_group_item.appendChild(_location);
+
+      maindiv.appendChild(list_group_item);
+    };
+
+    function reset() {
+      document.getElementById("location").innerHTML = "";
+      document.getElementById("task").innerHTML = "";
+      document.getElementById("num_helpers").innerHTML = "";
+      document.getElementById("request").innerHTML = "";
+
+    }
+
+    // function search() {
+    //   localStorage.setItem("search_value", document.getElementById("search_val"));
+    //   location.reload();
+    // }
+  </script>
+</body>
+
+</html>
